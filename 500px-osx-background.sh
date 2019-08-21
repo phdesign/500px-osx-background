@@ -74,6 +74,7 @@ rm "$RSSTMP"
 
 # cycling until a "good" image if found
 for image_page in $IMAGE_PAGES; do
+	# get the main photo page and extract the full image path
 	IMG=$(curl -s -L "$image_page" | xmllint --html --xpath "string(//meta[@property='og:image']/@content)" - 2>/dev/null)
 
 	IMGTMP=$(mktemp /tmp/500px-osx-background.png.XXXXXXXX)
@@ -91,11 +92,13 @@ for image_page in $IMAGE_PAGES; do
 		break
 	fi
 
+	# remove temporary image, we aren't using it
 	rm "$IMGTMP"
 	IMGTMP=
 done
 
 if [ -n "$IMGTMP" ]; then
+	# move our temporary image to its permanent location
 	mv "$IMGTMP" "$IMG_FILE"
 
 	# setting image as background
