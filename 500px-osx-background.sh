@@ -17,24 +17,17 @@ ONLY_LANDSCAPE_MODE=1
 # background image file path
 IMG_FILE="/tmp/500px-osx-background.png"
 
-# specify feed source type; available options: user, search, popular, upcoming, fresh, editors
+# specify feed source type; available options: user, popular, upcoming, fresh, editors
 SRC_TYPE="editors"
 
 # enable the single feed you prefer
 # feeds information are available at https://support.500px.com/hc/en-us/articles/204910987-What-RSS-feeds-are-available-
+# search rss seems to be unavailable anymore (404)
 
 # images of a specific user
 if [ "$SRC_TYPE" == "user" ]; then
 	USER="auino"
 	FEED="https://500px.com/$USER/rss"
-fi
-
-# images from a search
-if [ "$SRC_TYPE" == "search" ]; then
-	SEARCH_QUERY="cat"
-	CATEGORIES="Animals"
-	SORT="newest"
-	FEED="https://500px.com/search.rss?q=${SEARCH_QUERY}&type=photos&categories=${CATEGORIES}&sort=${SORT}"
 fi
 
 # popular feed
