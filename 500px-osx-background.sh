@@ -14,8 +14,8 @@
 # set to 0 if you want to use (also) portrait photos as background
 ONLY_LANDSCAPE_MODE=1
 
-# script directory (without final '/' slash)
-DIR="/Users/paul/Projects/other/500px-osx-background"
+# background image file path
+IMG_FILE="/tmp/500px-osx-background.png"
 
 # specify feed source type; available options: user, search, popular, upcoming, fresh, editors
 SRC_TYPE="editors"
@@ -61,43 +61,47 @@ fi
 #  CONFIGURATION END
 # --- --- --- --- ---
 
+# temp file for feed
+RSSTMP=$(mktemp /tmp/500px-osx-background.rss.XXXXXXXX)
+
 # randomize string
 RANDOMIZER=$(date +%s)
 
 # getting feed from 500px
-curl -s -o rss.xml "$FEED"
-IMAGE_PAGES=$(xmllint --noout --shell <<< "cat //item/link/text()" rss.xml | sed '/^[-/>[:space:]]*$/d' | shuf)
+curl -s -o "$RSSTMP" "$FEED"
+IMAGE_PAGES=$(xmllint --noout --shell <<< "cat //item/link/text()" "$RSSTMP" | sed '/^[-/>[:space:]]*$/d' | shuf)
+rm "$RSSTMP"
 
 # cycling until a "good" image if found
-FOUND=0
 for image_page in $IMAGE_PAGES; do
 	IMG=$(curl -s -L "$image_page" | xmllint --html --xpath "string(//meta[@property='og:image']/@content)" - 2>/dev/null)
 
-	# deleting previous imgs
-	rm $DIR/500px_img*
+	IMGTMP=$(mktemp /tmp/500px-osx-background.png.XXXXXXXX)
 
 	# getting image data from url
-	curl -s "$IMG" -o $DIR/500px_img_$RANDOMIZER.png
+	curl -s "$IMG" -o "$IMGTMP"
 
 	# getting image dimensions
-	IMG_W=`sips -g pixelWidth $DIR/500px_img_$RANDOMIZER.png|tail -n 1|awk '{print $2}'`
-	IMG_H=`sips -g pixelHeight $DIR/500px_img_$RANDOMIZER.png|tail -n 1|awk '{print $2}'`
+	IMG_W=`sips -g pixelWidth "$IMGTMP" | tail -n 1 | awk '{print $2}'`
+	IMG_H=`sips -g pixelHeight "$IMGTMP" | tail -n 1| awk '{print $2}'`
 	echo "Image size is ${IMG_W} x ${IMG_H}"
 
 	# checking if image is "good"
 	if [ ! $ONLY_LANDSCAPE_MODE ] || [ $IMG_W -gt $IMG_H ]; then
-		FOUND=1
 		break
 	fi
 
-	break
+	rm "$IMGTMP"
+	IMGTMP=
 done
 
-if [ $FOUND ]; then
+if [ -n "$IMGTMP" ]; then
+	mv "$IMGTMP" "$IMG_FILE"
+
 	# setting image as background
 	echo "Setting downloaded image as background"
 	osascript -e 'tell application "System Events" -- activate' -e 'end tell'
-	osascript -e 'tell application "System Events" to set picture of every desktop to ("'$DIR'/500px_img_'$RANDOMIZER'.png" as POSIX file as alias)'
+	osascript -e 'tell application "System Events" to set picture of every desktop to ("'$IMG_FILE'" as POSIX file as alias)'
 else
 	echo "No image found"
 fi
