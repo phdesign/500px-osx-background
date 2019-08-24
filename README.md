@@ -14,30 +14,76 @@ This script allows you to dynamically change your macOS background, taking image
     ```
 
  2. Configure the script, by opening it and setting configuration data as preferred
+
  3. Optionally, you can test the correct working of the script, by opening the Terminal app and running the following command:
 
     ```
     sh 500px-osx-background.sh
     ```
 
- 4. Put the script on your crontab, by opening the Terminal app and running the following command:
+### Scheduling with crontab ###
+
+
+ 1. Put the script on your crontab, by opening the Terminal app and running the following command:
 
     ```
     crontab -e
     ```
 
- 5. Now you have to append the following line (press `i` button to insert data):
+ 2. Now you have to append the following line (press `i` button to insert data):
 
     ```
     PATH=/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin
-
+    
     00 12 * * * sh /directory_path/500px-osx-background.sh
     ```
 
     where `/directory_path/` identifies the path of the directory containing the script (to be configured as value of the `$DIR` directory on the script), while `00 12` specifies the program has to be called every day at noon.
     setting the PATH is required to allow us to use user binaries
- 6. Hit `:q` to close, saving the file
- 7. Enjoy!
+
+ 2. Hit `:wq` to close, saving the file
+
+### Scheduling with launchd ###
+
+1. Create a file at `~/Library/LaunchAgents/500px-osx-background.agent.plist`
+2. Enter the following to schedule it to run 12pm daily
+
+```
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+	<dict>
+		<key>Label</key>
+		<string>500px-osx-background</string>
+		<key>ProgramArguments</key>
+		<array>
+			<string>/bin/sh</string>
+			<string>/path/to/500px-osx-background.sh</string>
+		</array>
+		<key>EnvironmentVariables</key>
+		<dict>
+			<key>PATH</key>
+			<string>/bin:/usr/bin:/usr/local/bin</string>
+		</dict>
+		<key>StartCalendarInterval</key>
+		<dict>
+			<key>Hour</key>
+			<integer>12</integer>
+			<key>Minute</key>
+			<integer>0</integer>
+		</dict>
+		<key>StandardErrorPath</key>
+		<string>/tmp/500px-osx-background.log</string>
+	</dict>
+</plist>
+```
+
+3. Testing using
+
+````
+$ launchctl load ~/Library/LaunchAgents/500px-osx-background.agent.plist 
+$ launchctl start 500px-osx-background
+````
 
 ### Notes ###
 

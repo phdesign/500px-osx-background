@@ -15,7 +15,7 @@
 ONLY_LANDSCAPE_MODE=1
 
 # background image file path
-IMG_FILE="/tmp/500px-osx-background.png"
+IMG_FILE="/Users/paul/Pictures/500px-osx-background.png"
 
 # specify feed source type; available options: user, popular, upcoming, fresh, editors
 SRC_TYPE="editors"
@@ -57,9 +57,6 @@ fi
 # temp file for feed
 RSSTMP=$(mktemp /tmp/500px-osx-background.rss.XXXXXXXX)
 
-# randomize string
-RANDOMIZER=$(date +%s)
-
 # getting feed from 500px
 curl -s -o "$RSSTMP" "$FEED"
 IMAGE_PAGES=$(xmllint --noout --shell <<< "cat //item/link/text()" "$RSSTMP" | sed '/^[-/>[:space:]]*$/d' | shuf)
@@ -67,17 +64,22 @@ rm "$RSSTMP"
 
 # cycling until a "good" image if found
 for image_page in $IMAGE_PAGES; do
-	# get the main photo page and extract the full image path
-	IMG=$(curl -s -L "$image_page" | xmllint --html --xpath "string(//meta[@property='og:image']/@content)" - 2>/dev/null)
+	# get the photo id
+	IMG_ID=$(echo "$image_page" | awk -F'/' '{print $5}')
 
-	IMGTMP=$(mktemp /tmp/500px-osx-background.png.XXXXXXXX)
+	# call the api to get the image url
+	IMG_URL=$(curl -s -H "x-csrf-token: null" "https://api.500px.com/v1/photos?image_size%5B%5D=2048&ids=$IMG_ID" \
+		| jq -r '.photos[].image_url[0]')
+	
+	# create a temp file to save the image to
+	IMG_TMP=$(mktemp /tmp/500px-osx-background.png.XXXXXXXX)
 
 	# getting image data from url
-	curl -s "$IMG" -o "$IMGTMP"
+	curl -s "$IMG_URL" -o "$IMG_TMP"
 
 	# getting image dimensions
-	IMG_W=`sips -g pixelWidth "$IMGTMP" | tail -n 1 | awk '{print $2}'`
-	IMG_H=`sips -g pixelHeight "$IMGTMP" | tail -n 1| awk '{print $2}'`
+	IMG_W=`sips -g pixelWidth "$IMG_TMP" | tail -n 1 | awk '{print $2}'`
+	IMG_H=`sips -g pixelHeight "$IMG_TMP" | tail -n 1| awk '{print $2}'`
 	echo "Image size is ${IMG_W} x ${IMG_H}"
 
 	# checking if image is "good"
@@ -86,13 +88,13 @@ for image_page in $IMAGE_PAGES; do
 	fi
 
 	# remove temporary image, we aren't using it
-	rm "$IMGTMP"
-	IMGTMP=
+	rm "$IMG_TMP"
+	IMG_TMP=
 done
 
-if [ -n "$IMGTMP" ]; then
+if [ -n "$IMG_TMP" ]; then
 	# move our temporary image to its permanent location
-	mv "$IMGTMP" "$IMG_FILE"
+	mv "$IMG_TMP" "$IMG_FILE"
 
 	# setting image as background
 	echo "Setting downloaded image as background"
