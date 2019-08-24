@@ -14,11 +14,14 @@
 # set to 0 if you want to use (also) portrait photos as background
 ONLY_LANDSCAPE_MODE=1
 
-# background image file path
-IMG_FILE="/Users/paul/Pictures/500px-osx-background.png"
+# directory to save background image (without trailing '/' slash)
+IMG_DIR="/tmp/Wallpaper"
+
+# the image name prefix
+IMG_PREFIX="500px-osx-background"
 
 # specify feed source type; available options: user, popular, upcoming, fresh, editors
-SRC_TYPE="editors"
+SRC_TYPE="popular"
 
 # enable the single feed you prefer
 # feeds information are available at https://support.500px.com/hc/en-us/articles/204910987-What-RSS-feeds-are-available-
@@ -91,13 +94,18 @@ for photo_id in $photo_ids; do
 done
 
 if [ -n "$image_temp_path" ]; then
+	# remove existing images
+	rm "$IMG_DIR/$IMG_PREFIX".*.png
+
 	# move our temporary image to its permanent location
-	mv "$image_temp_path" "$IMG_FILE"
+	IMG_PATH="$IMG_DIR/$(mktemp -u $IMG_PREFIX.XXXXXXXX).png"
+	echo "Saving image as $IMG_PATH"
+	mv "$image_temp_path" "$IMG_PATH"
 
 	# setting image as background
 	echo "Setting downloaded image as background"
 	osascript -e 'tell application "System Events" -- activate' -e 'end tell'
-	osascript -e 'tell application "System Events" to set picture of every desktop to ("'$IMG_FILE'" as POSIX file as alias)'
+	osascript -e 'tell application "System Events" to set picture of every desktop to ("'$IMG_PATH'" as POSIX file as alias)'
 else
 	echo "No image found"
 fi
