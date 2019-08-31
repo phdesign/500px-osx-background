@@ -98,7 +98,7 @@ if [ -n "$image_temp_path" ]; then
 	rm "$IMG_DIR/$IMG_PREFIX".*.png
 
 	# move our temporary image to its permanent location
-	IMG_PATH="$IMG_DIR/$(mktemp -u $IMG_PREFIX.XXXXXXXX).png"
+	IMG_PATH="$IMG_DIR/$IMG_PREFIX.$(openssl rand -hex 4).png"
 	echo "Saving image as $IMG_PATH"
 	mv "$image_temp_path" "$IMG_PATH"
 
