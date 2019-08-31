@@ -5,6 +5,14 @@ Easily set your Mac background to a random image on 500px website
 
 This script allows you to dynamically change your macOS background, taking images from [500px](https://500px.com).
 
+### Dependencies ###
+
+ * xmllint
+ * shuf
+ * curl
+ * mktemp
+ * openssl
+
 ### Installation ###
 
  1. Clone the repository:
