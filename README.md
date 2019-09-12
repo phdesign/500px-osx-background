@@ -18,7 +18,7 @@ This script allows you to dynamically change your macOS background, taking image
  1. Clone the repository:
 
     ```
-    git clone https://github.com/auino/500px-osx-background.git
+    git clone https://github.com/phdesign/500px-osx-background.git
     ```
 
  2. Configure the script, by opening it and setting configuration data as preferred
@@ -26,7 +26,7 @@ This script allows you to dynamically change your macOS background, taking image
  3. Optionally, you can test the correct working of the script, by opening the Terminal app and running the following command:
 
     ```
-    sh 500px-osx-background.sh
+    sh 500px-osx-background.sh OUTPUT_PATH
     ```
 
 ### Scheduling with crontab ###
@@ -43,10 +43,10 @@ This script allows you to dynamically change your macOS background, taking image
     ```
     PATH=/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin
     
-    00 12 * * * sh /directory_path/500px-osx-background.sh
+    00 12 * * * sh /directory_path/500px-osx-background.sh /path/to/save/image
     ```
 
-    where `/directory_path/` identifies the path of the directory containing the script (to be configured as value of the `$DIR` directory on the script), while `00 12` specifies the program has to be called every day at noon.
+    where `/directory_path/` identifies the path of the directory containing the script, `/path/to/save/image` is the folder to save the selected image, and `00 12` specifies the program has to be called every day at noon.
     setting the PATH is required to allow us to use user binaries
 
  2. Hit `:wq` to close, saving the file
@@ -67,6 +67,7 @@ This script allows you to dynamically change your macOS background, taking image
 		<array>
 			<string>/bin/sh</string>
 			<string>/path/to/500px-osx-background.sh</string>
+			<string>/path/to/save/image</string>
 		</array>
 		<key>EnvironmentVariables</key>
 		<dict>
@@ -80,6 +81,8 @@ This script allows you to dynamically change your macOS background, taking image
 			<key>Minute</key>
 			<integer>0</integer>
 		</dict>
+		<key>StandardOutPath</key>
+		<string>/tmp/500px-osx-background.log</string>
 		<key>StandardErrorPath</key>
 		<string>/tmp/500px-osx-background.log</string>
 	</dict>
@@ -91,6 +94,12 @@ This script allows you to dynamically change your macOS background, taking image
 ````
 $ launchctl load ~/Library/LaunchAgents/500px-osx-background.agent.plist 
 $ launchctl start 500px-osx-background
+````
+
+If you make changes you need to unload first.
+
+````
+$ launchctl unload ~/Library/LaunchAgents/500px-osx-background.agent.plist 
 ````
 
 ### Notes ###
@@ -108,7 +117,3 @@ It's also available a [Reddit version](https://github.com/auino/reddit-macos-bac
  * Thanks to [ctissier](https://github.com/ctissier) for the randomization trick to solve macOS cache issues
  * Thanks to [duongvu89](https://github.com/duongvu89) for the provided bug fixes
  * Thanks to [stefanskotte](https://github.com/stefanskotte) for the provided bug fix
-
-### Contacts ###
-
-You can find me on Twitter as [@auino](https://twitter.com/auino).

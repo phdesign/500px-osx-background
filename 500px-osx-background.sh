@@ -14,11 +14,8 @@
 # set to 0 if you want to use (also) portrait photos as background
 ONLY_LANDSCAPE_MODE=1
 
-# directory to save background image (without trailing '/' slash)
-IMG_DIR="/tmp/Wallpaper"
-
 # the image name prefix
-IMG_PREFIX="500px-osx-background"
+FILE_PREFIX="500px-osx-background"
 
 # specify feed source type; available options: user, popular, upcoming, fresh, editors
 SRC_TYPE="popular"
@@ -26,6 +23,30 @@ SRC_TYPE="popular"
 # enable the single feed you prefer
 # feeds information are available at https://support.500px.com/hc/en-us/articles/204910987-What-RSS-feeds-are-available-
 # search rss seems to be unavailable anymore (404)
+
+# --- --- --- --- ---
+#  CONFIGURATION END
+# --- --- --- --- ---
+
+log() {
+	echo "[$(date -u +"%Y-%m-%dT%H:%M:%SZ")] $1"
+}
+
+usage() {
+	echo
+    echo "Usage: $0 OUTPUT_PATH"
+	echo
+	echo "  Note that any existing wallpaper images in OUTPUT_PATH will be deleted"
+	echo
+}
+
+# directory to save background image (without trailing '/' slash)
+output_path="$1"
+
+if [ -z "$output_path" ]; then
+	usage
+	exit 1
+fi
 
 # images of a specific user
 if [ "$SRC_TYPE" == "user" ]; then
@@ -53,12 +74,8 @@ if [ "$SRC_TYPE" == "editors" ]; then
 	FEED="https://500px.com/editors.rss"
 fi
 
-# --- --- --- --- ---
-#  CONFIGURATION END
-# --- --- --- --- ---
-
 # temp file for feed
-rss_temp_path=$(mktemp /tmp/500px-osx-background.rss.XXXXXXXX)
+rss_temp_path=$(mktemp "/tmp/$FILE_PREFIX.rss.XXXXXXXX")
 
 # getting feed from 500px
 curl -s -o "$rss_temp_path" "$FEED"
@@ -73,7 +90,7 @@ for photo_id in $photo_ids; do
 		| jq -r '.photos[].image_url[0]')
 	
 	# create a temp file to save the image to
-	image_temp_path=$(mktemp /tmp/500px-osx-background.png.XXXXXXXX)
+	image_temp_path=$(mktemp "/tmp/$FILE_PREFIX.XXXXXXXX")
 
 	# getting image data from url
 	curl -s "$image_url" -o "$image_temp_path"
@@ -81,7 +98,7 @@ for photo_id in $photo_ids; do
 	# getting image dimensions
 	image_width=`sips -g pixelWidth "$image_temp_path" | tail -n 1 | awk '{print $2}'`
 	image_height=`sips -g pixelHeight "$image_temp_path" | tail -n 1| awk '{print $2}'`
-	echo "Image size is ${image_width} x ${image_height}"
+	log "Image size is ${image_width} x ${image_height}"
 
 	# checking if image is "good"
 	if [ ! $ONLY_LANDSCAPE_MODE ] || [ $image_width -gt $image_height ]; then
@@ -95,17 +112,18 @@ done
 
 if [ -n "$image_temp_path" ]; then
 	# remove existing images
-	rm "$IMG_DIR/$IMG_PREFIX".*.png
+	rm "$output_path/$FILE_PREFIX".*.png
 
 	# move our temporary image to its permanent location
-	IMG_PATH="$IMG_DIR/$IMG_PREFIX.$(openssl rand -hex 4).png"
-	echo "Saving image as $IMG_PATH"
-	mv "$image_temp_path" "$IMG_PATH"
+	img_path="$output_path/$(basename $image_temp_path).png"
+	log "Saving image as $img_path"
+	mv "$image_temp_path" "$img_path"
 
 	# setting image as background
-	echo "Setting downloaded image as background"
-	osascript -e 'tell application "System Events" -- activate' -e 'end tell'
-	osascript -e 'tell application "System Events" to set picture of every desktop to ("'$IMG_PATH'" as POSIX file as alias)'
+	# NOTE: this doesn't work if user isn't logged in. instead point wallpaper to our folder and set to change automatically.
+	#log "Setting downloaded image as background"
+	#osascript -e 'tell application "System Events" -- activate' -e 'end tell'
+	#osascript -e 'tell application "System Events" to set picture of every desktop to ("'$img_path'" as POSIX file as alias)'
 else
-	echo "No image found"
+	log "No image found"
 fi
